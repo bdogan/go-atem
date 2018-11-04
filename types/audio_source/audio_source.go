@@ -1,31 +1,31 @@
 package audio_source
 
-type AudioSource uint16
+type AudioSourceType uint16
 
 const (
-	Input1		AudioSource = 1
-	Input2		AudioSource = 2
-	Input3		AudioSource = 3
-	Input4		AudioSource = 4
-	Input5		AudioSource = 5
-	Input6		AudioSource = 6
-	Input7		AudioSource = 7
-	Input8		AudioSource = 8
-	Input9		AudioSource = 9
-	Input10		AudioSource = 10
-	Input11		AudioSource = 11
-	Input12		AudioSource = 12
-	Input13		AudioSource = 13
-	Input14		AudioSource = 14
-	Input15		AudioSource = 15
-	Input16		AudioSource = 16
-	Input17		AudioSource = 17
-	Input18		AudioSource = 18
-	Input19		AudioSource = 19
-	Input20		AudioSource = 20
-	XLR			AudioSource = 1001
-	AESEBU		AudioSource = 1101
-	RCA			AudioSource = 1201
-	MP1			AudioSource = 2001
-	MP2			AudioSource = 2002
+	Input1		AudioSourceType = 1
+	Input2		AudioSourceType = 2
+	Input3		AudioSourceType = 3
+	Input4		AudioSourceType = 4
+	Input5		AudioSourceType = 5
+	Input6		AudioSourceType = 6
+	Input7		AudioSourceType = 7
+	Input8		AudioSourceType = 8
+	Input9		AudioSourceType = 9
+	Input10		AudioSourceType = 10
+	Input11		AudioSourceType = 11
+	Input12		AudioSourceType = 12
+	Input13		AudioSourceType = 13
+	Input14		AudioSourceType = 14
+	Input15		AudioSourceType = 15
+	Input16		AudioSourceType = 16
+	Input17		AudioSourceType = 17
+	Input18		AudioSourceType = 18
+	Input19		AudioSourceType = 19
+	Input20		AudioSourceType = 20
+	XLR			AudioSourceType = 1001
+	AESEBU		AudioSourceType = 1101
+	RCA			AudioSourceType = 1201
+	MP1			AudioSourceType = 2001
+	MP2			AudioSourceType = 2002
 )

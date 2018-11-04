@@ -23,7 +23,7 @@ func (ac *AtemCmd) Length() uint16 {
 }
 
 func (ac *AtemCmd) String() string  {
-	return fmt.Sprintf("Command:\t[%s]\t%x", ac.Name, ac.Body)
+	return fmt.Sprintf("Command:\t[%s]\t%d", ac.Name, ac.Body)
 }
 
 func (ac *AtemCmd) ToBytes() []byte {

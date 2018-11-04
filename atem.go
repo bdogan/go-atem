@@ -32,6 +32,12 @@ type Atem struct {
 	// Atem
 	ProtocolVersion types.Version
 	ProductId types.NullTerminatedString
+	Warn types.NullTerminatedString
+	Topology types.Topology
+	MixEffectConfig types.MixEffectConfig
+	MediaPlayers types.MediaPlayers
+	MultiViewCount uint8
+	AudioMixerConfig types.AudioMixerConfig
 
 	// Private
 	bodyBuffer []byte
@@ -219,6 +225,18 @@ func (a *Atem) processInCmdQueue() {
 			a.ProtocolVersion = types.Version{ Major: binary.BigEndian.Uint16(c.Body[0:2]), Minor: binary.BigEndian.Uint16(c.Body[2:4]) }
 		case "_pin":
 			a.ProductId = types.NullTerminatedString{ Body: c.Body }
+		case "Warn":
+			a.Warn = types.NullTerminatedString{ Body: c.Body }
+		case "_top":
+			a.Topology = types.Topology{ MEs: c.Body[0], Sources: c.Body[1], ColorGenerators: c.Body[2], AUXBusses: c.Body[3], DownstreamKeyes: c.Body[4], Stringers: c.Body[5], DVEs: c.Body[6], SuperSources: c.Body[7], UnknownByte8: c.Body[8], HasSDOutput: (c.Body[9] & 1) == 1, UnknownByte10: c.Body[10] }
+		case "_MeC":
+			a.MixEffectConfig = types.MixEffectConfig{ ME: types.AtemMeModel(c.Body[0]), KeyersOnME: c.Body[1] }
+		case "_mpl":
+			a.MediaPlayers = types.MediaPlayers{ StillBanks: c.Body[0], ClipBanks: c.Body[1] }
+		case "_MvC":
+			a.MultiViewCount = c.Body[0]
+		case "_AMC":
+			a.AudioMixerConfig = types.AudioMixerConfig{ AudioChannels: c.Body[0], HasMonitor: (c.Body[1] & 1) == 1 }
 		}
 
 		// Trigger change command
