@@ -38,6 +38,7 @@ type Atem struct {
 	MediaPlayers types.MediaPlayers
 	MultiViewCount uint8
 	AudioMixerConfig types.AudioMixerConfig
+	VideoMixerConfig types.VideoMixerConfig
 
 	// Private
 	bodyBuffer []byte
@@ -237,6 +238,8 @@ func (a *Atem) processInCmdQueue() {
 			a.MultiViewCount = c.Body[0]
 		case "_AMC":
 			a.AudioMixerConfig = types.AudioMixerConfig{ AudioChannels: c.Body[0], HasMonitor: (c.Body[1] & 1) == 1 }
+		case "_VMC":
+			a.VideoMixerConfig = types.NewVideoMixerConfig(binary.BigEndian.Uint16(c.Body[0:2]))
 		}
 
 		// Trigger change command
