@@ -37,25 +37,17 @@ var VideoSourcePortTypes = map[uint8]string{
 	130: "Mask",
 }
 
-type Availability struct {
-	Auxilary bool
-	Multiviewer bool
-	SuperSourceArt bool
-	SuperSourceBox bool
-	KeySources bool
+var Availability = map[uint8]string{
+	0: "Auxilary",
+	1: "Multiviewer",
+	2: "SuperSourceArt",
+	3: "SuperSourceBox",
+	4: "KeySources",
 }
 
-func (a *Availability) String() string {
-	return fmt.Sprintf("Auxilary: %t, Multiviewer: %t, SuperSourceArt: %t, SuperSourceBox: %t, KeySources: %t", a.Auxilary, a.Multiviewer, a.SuperSourceArt, a.SuperSourceBox, a.KeySources)
-}
-
-type MEAvailability struct {
-	ME1FillSources bool
-	ME2FillSources bool
-}
-
-func (mea *MEAvailability) String() string {
-	return fmt.Sprintf("ME1FillSources: %t, ME2FillSources: %t", mea.ME1FillSources, mea.ME2FillSources)
+var MEAvailability = map[uint8]string{
+	0: "ME1 + FillSources",
+	1: "ME2 + FillSources",
 }
 
 var VideoSourceType = map[uint16]string{
@@ -144,12 +136,12 @@ type VideoSource struct {
 	AvailableExternalPortTypes []string
 	ExternalPortType string
 	PortType string
-	Availability Availability
-	MEAvailability MEAvailability
+	Availability []string
+	MEAvailability []string
 }
 
 func (vs *VideoSource) String() string {
-	return fmt.Sprintf("[Type: %s, LongName: %s, ShortName: %s, AvailableExternalPortTypes: %s, ExternalPortType: %s, PortType: %s, Availability: %s, MEAvailibilty: %s]", vs.Type, vs.LongName.String(), vs.ShortName.String(), vs.AvailableExternalPortTypes, vs.ExternalPortType, vs.PortType, vs.Availability.String(), vs.MEAvailability.String())
+	return fmt.Sprintf("[Type: %s, LongName: %s, ShortName: %s, AvailableExternalPortTypes: %s, ExternalPortType: %s, PortType: %s, Availability: %s, MEAvailibilty: %s]", vs.Type, vs.LongName.String(), vs.ShortName.String(), vs.AvailableExternalPortTypes, vs.ExternalPortType, vs.PortType, vs.Availability, vs.MEAvailability)
 }
 
 func (vs *VideoSource) Update(data []byte) {
@@ -160,14 +152,28 @@ func (vs *VideoSource) Update(data []byte) {
 
 	// Available Ext Port Types
 	for i, v := range VideoSourceAvailableExtPortTypes {
-		if data[27] & (1 << i) == (1 << i) {
+		if data[29] & (1 << i) == (1 << i) {
 			vs.AvailableExternalPortTypes = append(vs.AvailableExternalPortTypes, v)
 		}
 	}
 
 	// Ext Port Type
-	vs.ExternalPortType = VideoSourceExtPortTypes[data[29]]
+	vs.ExternalPortType = VideoSourceExtPortTypes[data[31]]
 
 	// Port Type
-	vs.PortType = VideoSourcePortTypes[data[30]]
+	vs.PortType = VideoSourcePortTypes[data[32]]
+
+	// Availability
+	for i, v := range Availability {
+		if data[34] & (1 << i) == (1 << i) {
+			vs.Availability = append(vs.Availability, v)
+		}
+	}
+
+	// MeAvailability
+	for i, v := range MEAvailability {
+		if data[35] & (1 << i) == (1 << i) {
+			vs.MEAvailability = append(vs.MEAvailability, v)
+		}
+	}
 }
