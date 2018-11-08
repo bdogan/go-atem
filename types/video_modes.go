@@ -55,12 +55,26 @@ type VideoMode struct {
 	index uint16
 }
 
+func NewVideoModeByIndex(index uint8) *VideoMode {
+	var videoMode VideoMode
+	for _, vm := range VideoModes {
+		if vm.IndexEquals(uint16(index)) {
+			videoMode = *vm
+		}
+	}
+	return &videoMode
+}
+
 func NewVideoMode(index uint16, lines uint16, scanType ScanType, frameRate float32, videoRegion VideoRegion, aspectRatio AspectRatio) *VideoMode {
 	return &VideoMode{ index: index, Lines: lines, ScanType: scanType, FrameRate: frameRate, VideoRegion: videoRegion, AspectRatio: aspectRatio }
 }
 
 func (vm *VideoMode) IsSupported(vmode uint16) bool {
 	return vm.index < vmode
+}
+
+func (vm *VideoMode) IndexEquals(i uint16) bool {
+	return i == vm.index
 }
 
 func (vm *VideoMode) String() string {

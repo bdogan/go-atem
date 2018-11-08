@@ -7,6 +7,7 @@ import (
 	"go-atem/cmd"
 	"go-atem/packet"
 	"go-atem/types"
+	"go-atem/types/video_source"
 	"net"
 	"reflect"
 	"strconv"
@@ -39,6 +40,10 @@ type Atem struct {
 	MultiViewCount uint8
 	AudioMixerConfig types.AudioMixerConfig
 	VideoMixerConfig types.VideoMixerConfig
+	MacroPool uint8
+	PowerStatus types.PowerStatus
+	VideoMode *types.VideoMode
+	VideoSources *video_source.VideoSources
 
 	// Private
 	bodyBuffer []byte
@@ -60,8 +65,13 @@ const (
 
 // Public Static Zone Start
 
-func Create(Ip string, Debug bool) Atem {
-	return Atem{ Ip: Ip, Debug: Debug, State: Closed, listeners: map[string][]AtemCallback{} }
+func Create(Ip string, Debug bool) *Atem {
+	atem := &Atem{ Ip: Ip, Debug: Debug, State: Closed, listeners: map[string][]AtemCallback{} }
+
+	// Initials
+	atem.VideoSources = video_source.CreateVideoSourceList()
+
+	return atem
 }
 
 // Public Zone Start
@@ -240,6 +250,14 @@ func (a *Atem) processInCmdQueue() {
 			a.AudioMixerConfig = types.AudioMixerConfig{ AudioChannels: c.Body[0], HasMonitor: (c.Body[1] & 1) == 1 }
 		case "_VMC":
 			a.VideoMixerConfig = types.NewVideoMixerConfig(binary.BigEndian.Uint16(c.Body[0:2]))
+		case "_MAC":
+			a.MacroPool = c.Body[0]
+		case "Powr":
+			a.PowerStatus = types.PowerStatus{ MainPower: c.Body[0] & 1 == 1, BackupPower: c.Body[0] & ( 1 << 1 ) == ( 1 << 1 ) }
+		case "VidM":
+			a.VideoMode = types.NewVideoModeByIndex(c.Body[0])
+		case "InPr":
+			a.VideoSources.Update(c.Body)
 		}
 
 		// Trigger change command
