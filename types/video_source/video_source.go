@@ -119,6 +119,14 @@ func (vss *VideoSources) Update(data []byte) {
 	videoSource.Update(data)
 }
 
+func (vss *VideoSources) Get(index uint16) *VideoSource {
+	videoSource, exists := (*vss.list)[index]
+	if !exists {
+		return nil
+	}
+	return videoSource
+}
+
 func (vss *VideoSources) String() string {
 	var list []string
 	for _, vs := range *vss.list {

@@ -44,6 +44,8 @@ type Atem struct {
 	PowerStatus types.PowerStatus
 	VideoMode *types.VideoMode
 	VideoSources *video_source.VideoSources
+	ProgramInput *video_source.VideoSource
+	PreviewInput *video_source.VideoSource
 
 	// Private
 	bodyBuffer []byte
@@ -258,6 +260,10 @@ func (a *Atem) processInCmdQueue() {
 			a.VideoMode = types.NewVideoModeByIndex(c.Body[0])
 		case "InPr":
 			a.VideoSources.Update(c.Body)
+		case "PrgI":
+			a.ProgramInput = a.VideoSources.Get(binary.BigEndian.Uint16(c.Body[2:4]))
+		case "PrvI":
+			a.PreviewInput = a.VideoSources.Get(binary.BigEndian.Uint16(c.Body[2:4]))
 		}
 
 		// Trigger change command
