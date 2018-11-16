@@ -24,7 +24,7 @@ type app struct {
 }
 
 func (at *app) onAtemConnected()  {
-	log.Printf("ATEM connected on %s. UID:%d\n", at.atemClient.Connection.LocalAddr().String(), at.atemClient.UID)
+	log.Printf("ATEM connected at %s. UID:%d\n", atemClient.Ip, at.atemClient.UID)
 	log.Printf("Product ID: %s, Protocol Version: %s\n", at.atemClient.ProductId.String(), at.atemClient.ProtocolVersion.String())
 }
 
@@ -35,7 +35,7 @@ func (at *app) onAtemClosed()  {
 func main() {
 
 	// Create Application
-	app := app {
+	app := app{
 		atemClient: atem.Create("192.168.0.2", true),
 	}
 
