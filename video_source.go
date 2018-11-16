@@ -103,6 +103,58 @@ type VideoSources struct {
 	list *map[uint16]*VideoSource
 }
 
+type VideoInputType uint16
+
+const (
+	VideoBlack      VideoInputType = 0
+	VideoInput1     VideoInputType = 1
+	VideoInput2     VideoInputType = 2
+	VideoInput3     VideoInputType = 3
+	VideoInput4     VideoInputType = 4
+	VideoInput5     VideoInputType = 5
+	VideoInput6     VideoInputType = 6
+	VideoInput7     VideoInputType = 7
+	VideoInput8     VideoInputType = 8
+	VideoInput9     VideoInputType = 9
+	VideoInput10    VideoInputType = 10
+	VideoInput11    VideoInputType = 11
+	VideoInput12    VideoInputType = 12
+	VideoInput13    VideoInputType = 13
+	VideoInput14    VideoInputType = 14
+	VideoInput15    VideoInputType = 15
+	VideoInput16    VideoInputType = 16
+	VideoInput17    VideoInputType = 17
+	VideoInput18    VideoInputType = 18
+	VideoInput19    VideoInputType = 19
+	VideoInput20    VideoInputType = 20
+	ColorBars       VideoInputType = 1000
+	Color1          VideoInputType = 2001
+	Color2          VideoInputType = 2002
+	MediaPlayer1    VideoInputType = 3010
+	MediaPlayer1Key VideoInputType = 3011
+	MediaPlayer2    VideoInputType = 3020
+	MediaPlayer2Key VideoInputType = 3021
+	Key1Mask        VideoInputType = 4010
+	Key2Mask        VideoInputType = 4020
+	Key3Mask        VideoInputType = 4030
+	Key4Mask        VideoInputType = 4040
+	DSK1Mask        VideoInputType = 5010
+	DSK2Mask        VideoInputType = 5020
+	SuperSource     VideoInputType = 6000
+	CleanFeed1      VideoInputType = 7001
+	CleanFeed2      VideoInputType = 7002
+	Auxilary1       VideoInputType = 8001
+	Auxilary2       VideoInputType = 8002
+	Auxilary3       VideoInputType = 8003
+	Auxilary4       VideoInputType = 8004
+	Auxilary5       VideoInputType = 8005
+	Auxilary6       VideoInputType = 8006
+	ME1Prog         VideoInputType = 10010
+	ME1Prev         VideoInputType = 10011
+	ME2Prog         VideoInputType = 10020
+	ME2Prev         VideoInputType = 10021
+)
+
 func CreateVideoSourceList() *VideoSources {
 	list := map[uint16]*VideoSource{}
 	return &VideoSources{list: &list}
