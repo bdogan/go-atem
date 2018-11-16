@@ -25,11 +25,10 @@ type AtemCallback func()
 type Atem struct {
 
 	// Public
-	Ip         string
-	State      ConnectionState
-	Debug      bool
-	UID        uint16
-	Connection net.Conn
+	Ip    string
+	State ConnectionState
+	Debug bool
+	UID   uint16
 
 	// Atem
 	ProtocolVersion  types.Version
@@ -49,6 +48,7 @@ type Atem struct {
 	PreviewInput     *video_source.VideoSource
 
 	// Private
+	connection     net.Conn
 	bodyBuffer     []byte
 	outPacketQueue chan *packet.AtemPacket
 	inPacketQueue  chan *packet.AtemPacket
@@ -80,7 +80,7 @@ func Create(Ip string, Debug bool) *Atem {
 // Public Zone Start
 
 func (a *Atem) Connected() bool {
-	return a.State == Open && a.Connection != nil
+	return a.State == Open && a.connection != nil
 }
 
 func (a *Atem) On(event string, callback func()) {
@@ -90,6 +90,33 @@ func (a *Atem) On(event string, callback func()) {
 	a.listeners[event] = append(a.listeners[event], callback)
 }
 
+func (a *Atem) Connect() error {
+	for {
+		err := a.connect()
+		if a.Debug {
+			fmt.Println(err)
+		}
+		if err != nil {
+			return err
+		}
+	}
+}
+
+func (a *Atem) Close() {
+	if a.Connected() {
+		a.State = Closed
+		a.connection.Close()
+		a.connection = nil
+	}
+	if a.initialized {
+		a.emit("closed")
+		a.initialized = false
+	}
+
+}
+
+// Private Zone Start
+
 func (a *Atem) emit(event string, params ...interface{}) {
 	if listeners, exists := a.listeners[event]; exists {
 		in := make([]reflect.Value, len(params))
@@ -98,15 +125,6 @@ func (a *Atem) emit(event string, params ...interface{}) {
 		}
 		for _, cb := range listeners {
 			reflect.ValueOf(cb).Call(in)
-		}
-	}
-}
-
-func (a *Atem) Connect() {
-	for {
-		err := a.connect()
-		if err != nil && a.Debug {
-			fmt.Println(err)
 		}
 	}
 }
@@ -125,7 +143,7 @@ func (a *Atem) connect() error {
 	// Trying to connect
 	a.State = Connecting
 	var err error
-	a.Connection, err = net.DialTimeout("udp", a.Ip+":"+strconv.Itoa(dstPort), time.Duration(time.Millisecond*1000))
+	a.connection, err = net.DialTimeout("udp", a.Ip+":"+strconv.Itoa(dstPort), time.Duration(time.Millisecond*1000))
 	if err != nil {
 		a.State = Closed
 		return err
@@ -165,32 +183,19 @@ func (a *Atem) connect() error {
 	a.processReadQueue()
 
 	// Close connection
-	if a.Connection != nil {
-		a.Connection.Close()
+	if a.connection != nil {
+		a.connection.Close()
 	}
 
 	// Return success
 	return nil
 }
 
-func (a *Atem) Close() {
-	if a.Connected() {
-		a.State = Closed
-		a.Connection.Close()
-		a.Connection = nil
-	}
-	if a.initialized {
-		a.emit("closed")
-		a.initialized = false
-	}
-
-}
-
 func (a *Atem) writePacket(p *packet.AtemPacket) error {
 	if !a.Connected() {
 		return errors.New("connection error on write packet")
 	}
-	_, err := a.Connection.Write(p.ToBytes())
+	_, err := a.connection.Write(p.ToBytes())
 	if err != nil {
 		a.Close()
 		return err
@@ -206,8 +211,8 @@ func (a *Atem) readPacket(timeout time.Time) (*packet.AtemPacket, error) {
 		return nil, errors.New("connection error on read packet")
 	}
 	var packetBuffer [2060]byte
-	a.Connection.SetReadDeadline(timeout)
-	n, err := a.Connection.Read(packetBuffer[0:])
+	a.connection.SetReadDeadline(timeout)
+	n, err := a.connection.Read(packetBuffer[0:])
 	if err != nil {
 		return nil, err
 	}
