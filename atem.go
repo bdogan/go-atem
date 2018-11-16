@@ -8,11 +8,6 @@ import (
 	"reflect"
 	"strconv"
 	"time"
-
-	"github.com/bdogan/go-atem/cmd"
-	"github.com/bdogan/go-atem/packet"
-	"github.com/bdogan/go-atem/types"
-	"github.com/bdogan/go-atem/types/video_source"
 )
 
 var (
@@ -31,29 +26,29 @@ type Atem struct {
 	UID   uint16
 
 	// Atem
-	ProtocolVersion  types.Version
-	ProductId        types.NullTerminatedString
-	Warn             types.NullTerminatedString
-	Topology         types.Topology
-	MixEffectConfig  types.MixEffectConfig
-	MediaPlayers     types.MediaPlayers
+	ProtocolVersion  Version
+	ProductId        NullTerminatedString
+	Warn             NullTerminatedString
+	Topology         Topology
+	MixEffectConfig  MixEffectConfig
+	MediaPlayers     MediaPlayers
 	MultiViewCount   uint8
-	AudioMixerConfig types.AudioMixerConfig
-	VideoMixerConfig types.VideoMixerConfig
+	AudioMixerConfig AudioMixerConfig
+	VideoMixerConfig VideoMixerConfig
 	MacroPool        uint8
-	PowerStatus      types.PowerStatus
-	VideoMode        *types.VideoMode
-	VideoSources     *video_source.VideoSources
-	ProgramInput     *video_source.VideoSource
-	PreviewInput     *video_source.VideoSource
+	PowerStatus      PowerStatus
+	VideoMode        *VideoMode
+	VideoSources     *VideoSources
+	ProgramInput     *VideoSource
+	PreviewInput     *VideoSource
 
 	// Private
 	connection     net.Conn
 	bodyBuffer     []byte
-	outPacketQueue chan *packet.AtemPacket
-	inPacketQueue  chan *packet.AtemPacket
+	outPacketQueue chan *AtemPacket
+	inPacketQueue  chan *AtemPacket
 	inBodyQueue    chan []byte
-	inCmdQueue     chan *cmd.AtemCmd
+	inCmdQueue     chan *AtemCmd
 	initialized    bool
 	listeners      map[string][]AtemCallback
 }
@@ -72,7 +67,7 @@ func Create(Ip string, Debug bool) *Atem {
 	atem := &Atem{Ip: Ip, Debug: Debug, State: Closed, listeners: map[string][]AtemCallback{}}
 
 	// Initials
-	atem.VideoSources = video_source.CreateVideoSourceList()
+	atem.VideoSources = CreateVideoSourceList()
 
 	return atem
 }
@@ -151,11 +146,11 @@ func (a *Atem) connect() error {
 	a.State = Open
 
 	// Send hello packet
-	a.writePacket(packet.NewConnectCmd(a.UID))
+	a.writePacket(NewConnectCmd(a.UID))
 
 	// Read hi packet
 	p, err := a.readPacket(time.Now().Add(time.Millisecond * 100))
-	if err != nil || p == nil || p.Is(packet.ConnectCommand) || p.Body[0] != 0x2 {
+	if err != nil || p == nil || p.Is(ConnectCommand) || p.Body[0] != 0x2 {
 		a.State = Closed
 		if err != nil {
 			return err
@@ -165,13 +160,13 @@ func (a *Atem) connect() error {
 	a.UID = p.UID
 
 	// Send OK
-	a.writePacket(packet.NewAckCmd(a.UID, 0))
+	a.writePacket(NewAckCmd(a.UID, 0))
 
 	// Create chan
 	a.inBodyQueue = make(chan []byte)
-	a.inCmdQueue = make(chan *cmd.AtemCmd)
-	a.outPacketQueue = make(chan *packet.AtemPacket)
-	a.inPacketQueue = make(chan *packet.AtemPacket)
+	a.inCmdQueue = make(chan *AtemCmd)
+	a.outPacketQueue = make(chan *AtemPacket)
+	a.inPacketQueue = make(chan *AtemPacket)
 
 	// Go queues
 	go a.processInCmdQueue()
@@ -191,7 +186,7 @@ func (a *Atem) connect() error {
 	return nil
 }
 
-func (a *Atem) writePacket(p *packet.AtemPacket) error {
+func (a *Atem) writePacket(p *AtemPacket) error {
 	if !a.Connected() {
 		return errors.New("connection error on write packet")
 	}
@@ -206,7 +201,7 @@ func (a *Atem) writePacket(p *packet.AtemPacket) error {
 	return nil
 }
 
-func (a *Atem) readPacket(timeout time.Time) (*packet.AtemPacket, error) {
+func (a *Atem) readPacket(timeout time.Time) (*AtemPacket, error) {
 	if !a.Connected() {
 		return nil, errors.New("connection error on read packet")
 	}
@@ -216,14 +211,14 @@ func (a *Atem) readPacket(timeout time.Time) (*packet.AtemPacket, error) {
 	if err != nil {
 		return nil, err
 	}
-	p := packet.Parse(packetBuffer[0:n])
+	p := ParsePacket(packetBuffer[0:n])
 	if a.Debug {
 		fmt.Printf("Receive: \t%x\n", p.ToBytes()[0:12])
 	}
 	return p, nil
 }
 
-func (a *Atem) writePacketQueue(p *packet.AtemPacket) {
+func (a *Atem) writePacketQueue(p *AtemPacket) {
 	// Send packet to queue
 	a.outPacketQueue <- p
 }
@@ -241,29 +236,29 @@ func (a *Atem) processInCmdQueue() {
 		// Save command
 		switch c.Name {
 		case "_ver":
-			a.ProtocolVersion = types.Version{Major: binary.BigEndian.Uint16(c.Body[0:2]), Minor: binary.BigEndian.Uint16(c.Body[2:4])}
+			a.ProtocolVersion = Version{Major: binary.BigEndian.Uint16(c.Body[0:2]), Minor: binary.BigEndian.Uint16(c.Body[2:4])}
 		case "_pin":
-			a.ProductId = types.NullTerminatedString{Body: c.Body}
+			a.ProductId = NullTerminatedString{Body: c.Body}
 		case "Warn":
-			a.Warn = types.NullTerminatedString{Body: c.Body}
+			a.Warn = NullTerminatedString{Body: c.Body}
 		case "_top":
-			a.Topology = types.Topology{MEs: c.Body[0], Sources: c.Body[1], ColorGenerators: c.Body[2], AUXBusses: c.Body[3], DownstreamKeyes: c.Body[4], Stringers: c.Body[5], DVEs: c.Body[6], SuperSources: c.Body[7], UnknownByte8: c.Body[8], HasSDOutput: (c.Body[9] & 1) == 1, UnknownByte10: c.Body[10]}
+			a.Topology = Topology{MEs: c.Body[0], Sources: c.Body[1], ColorGenerators: c.Body[2], AUXBusses: c.Body[3], DownstreamKeyes: c.Body[4], Stringers: c.Body[5], DVEs: c.Body[6], SuperSources: c.Body[7], UnknownByte8: c.Body[8], HasSDOutput: (c.Body[9] & 1) == 1, UnknownByte10: c.Body[10]}
 		case "_MeC":
-			a.MixEffectConfig = types.MixEffectConfig{ME: types.AtemMeModel(c.Body[0]), KeyersOnME: c.Body[1]}
+			a.MixEffectConfig = MixEffectConfig{ME: AtemMeModel(c.Body[0]), KeyersOnME: c.Body[1]}
 		case "_mpl":
-			a.MediaPlayers = types.MediaPlayers{StillBanks: c.Body[0], ClipBanks: c.Body[1]}
+			a.MediaPlayers = MediaPlayers{StillBanks: c.Body[0], ClipBanks: c.Body[1]}
 		case "_MvC":
 			a.MultiViewCount = c.Body[0]
 		case "_AMC":
-			a.AudioMixerConfig = types.AudioMixerConfig{AudioChannels: c.Body[0], HasMonitor: (c.Body[1] & 1) == 1}
+			a.AudioMixerConfig = AudioMixerConfig{AudioChannels: c.Body[0], HasMonitor: (c.Body[1] & 1) == 1}
 		case "_VMC":
-			a.VideoMixerConfig = types.NewVideoMixerConfig(binary.BigEndian.Uint16(c.Body[0:2]))
+			a.VideoMixerConfig = NewVideoMixerConfig(binary.BigEndian.Uint16(c.Body[0:2]))
 		case "_MAC":
 			a.MacroPool = c.Body[0]
 		case "Powr":
-			a.PowerStatus = types.PowerStatus{MainPower: c.Body[0]&1 == 1, BackupPower: c.Body[0]&(1<<1) == (1 << 1)}
+			a.PowerStatus = PowerStatus{MainPower: c.Body[0]&1 == 1, BackupPower: c.Body[0]&(1<<1) == (1 << 1)}
 		case "VidM":
-			a.VideoMode = types.NewVideoModeByIndex(c.Body[0])
+			a.VideoMode = NewVideoModeByIndex(c.Body[0])
 		case "InPr":
 			a.VideoSources.Update(c.Body)
 		case "PrgI":
@@ -292,7 +287,7 @@ func (a *Atem) processInBodyQueue() {
 		totalBytes := uint16(len(b))
 		for totalBytes > byteCursor {
 			packetLength := binary.BigEndian.Uint16(b[byteCursor : byteCursor+2])
-			a.inCmdQueue <- cmd.Parse(b[byteCursor : byteCursor+packetLength])
+			a.inCmdQueue <- ParseCmd(b[byteCursor : byteCursor+packetLength])
 			byteCursor = byteCursor + packetLength
 		}
 
@@ -317,7 +312,7 @@ func (a *Atem) processInPacketQueue() {
 		switch true {
 
 		// Sync command
-		case p.Is(packet.SyncCommand):
+		case p.Is(SyncCommand):
 			if p.HasBody() {
 				// Append to body buffer
 				a.bodyBuffer = append(a.bodyBuffer, p.Body...)
@@ -326,7 +321,7 @@ func (a *Atem) processInPacketQueue() {
 				// Clean body buffer
 				a.bodyBuffer = make([]byte, 0)
 				// Send ack
-				a.writePacketQueue(packet.NewAckCmd(a.UID, p.AckRequestID))
+				a.writePacketQueue(NewAckCmd(a.UID, p.AckRequestID))
 			}
 
 		// Else is close

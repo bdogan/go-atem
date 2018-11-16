@@ -1,4 +1,4 @@
-package cmd
+package atem
 
 import (
 	"fmt"
@@ -10,11 +10,11 @@ type AtemCmd struct {
 	Header []byte
 }
 
-func New(Name string, Body []byte) *AtemCmd {
+func NewCmd(Name string, Body []byte) *AtemCmd {
 	return &AtemCmd{Name: Name, Body: Body}
 }
 
-func Parse(msg []byte) *AtemCmd {
+func ParseCmd(msg []byte) *AtemCmd {
 	return &AtemCmd{Name: string(msg[4:8]), Body: msg[8:]}
 }
 

@@ -1,11 +1,9 @@
-package video_source
+package atem
 
 import (
 	"encoding/binary"
 	"fmt"
 	"strings"
-
-	"github.com/bdogan/go-atem/types"
 )
 
 var VideoSourceAvailableExtPortTypes = map[uint8]string{
@@ -140,8 +138,8 @@ type VideoSource struct {
 	index uint16
 
 	Type                       string
-	LongName                   types.NullTerminatedString
-	ShortName                  types.NullTerminatedString
+	LongName                   NullTerminatedString
+	ShortName                  NullTerminatedString
 	AvailableExternalPortTypes []string
 	ExternalPortType           string
 	PortType                   string
@@ -155,8 +153,8 @@ func (vs *VideoSource) String() string {
 
 func (vs *VideoSource) Update(data []byte) {
 	vs.Type = VideoSourceType[vs.index]
-	vs.LongName = types.NullTerminatedString{Body: data[2:22]}
-	vs.ShortName = types.NullTerminatedString{Body: data[22:26]}
+	vs.LongName = NullTerminatedString{Body: data[2:22]}
+	vs.ShortName = NullTerminatedString{Body: data[22:26]}
 	vs.AvailableExternalPortTypes = []string{}
 
 	// Available Ext Port Types
