@@ -45,8 +45,8 @@ type Atem struct {
 	// Private
 	connection     net.Conn
 	bodyBuffer     []byte
-	outPacketQueue chan *AtemPacket
-	inPacketQueue  chan *AtemPacket
+	outPacketQueue chan *atemPacket
+	inPacketQueue  chan *atemPacket
 	inBodyQueue    chan []byte
 	inCmdQueue     chan *AtemCmd
 	initialized    bool
@@ -146,27 +146,27 @@ func (a *Atem) connect() error {
 	a.State = Open
 
 	// Send hello packet
-	a.writePacket(NewConnectCmd(a.UID))
+	a.writePacket(newConnectCmd(a.UID))
 
 	// Read hi packet
 	p, err := a.readPacket(time.Now().Add(time.Millisecond * 100))
-	if err != nil || p == nil || p.Is(ConnectCommand) || p.Body[0] != 0x2 {
+	if err != nil || p == nil || p.is(connectCommand) || p.body[0] != 0x2 {
 		a.State = Closed
 		if err != nil {
 			return err
 		}
 		return errors.New("unable to connect device")
 	}
-	a.UID = p.UID
+	a.UID = p.uid
 
 	// Send OK
-	a.writePacket(NewAckCmd(a.UID, 0))
+	a.writePacket(newAckCmd(a.UID, 0))
 
 	// Create chan
 	a.inBodyQueue = make(chan []byte)
 	a.inCmdQueue = make(chan *AtemCmd)
-	a.outPacketQueue = make(chan *AtemPacket)
-	a.inPacketQueue = make(chan *AtemPacket)
+	a.outPacketQueue = make(chan *atemPacket)
+	a.inPacketQueue = make(chan *atemPacket)
 
 	// Go queues
 	go a.processInCmdQueue()
@@ -186,22 +186,22 @@ func (a *Atem) connect() error {
 	return nil
 }
 
-func (a *Atem) writePacket(p *AtemPacket) error {
+func (a *Atem) writePacket(p *atemPacket) error {
 	if !a.Connected() {
 		return errors.New("connection error on write packet")
 	}
-	_, err := a.connection.Write(p.ToBytes())
+	_, err := a.connection.Write(p.toBytes())
 	if err != nil {
 		a.Close()
 		return err
 	}
 	if a.Debug {
-		fmt.Printf("Send: \t\t%x\n", p.ToBytes()[0:12])
+		fmt.Printf("Send: \t\t%x\n", p.toBytes()[0:12])
 	}
 	return nil
 }
 
-func (a *Atem) readPacket(timeout time.Time) (*AtemPacket, error) {
+func (a *Atem) readPacket(timeout time.Time) (*atemPacket, error) {
 	if !a.Connected() {
 		return nil, errors.New("connection error on read packet")
 	}
@@ -211,14 +211,14 @@ func (a *Atem) readPacket(timeout time.Time) (*AtemPacket, error) {
 	if err != nil {
 		return nil, err
 	}
-	p := ParsePacket(packetBuffer[0:n])
+	p := parsePacket(packetBuffer[0:n])
 	if a.Debug {
-		fmt.Printf("Receive: \t%x\n", p.ToBytes()[0:12])
+		fmt.Printf("Receive: \t%x\n", p.toBytes()[0:12])
 	}
 	return p, nil
 }
 
-func (a *Atem) writePacketQueue(p *AtemPacket) {
+func (a *Atem) writePacketQueue(p *atemPacket) {
 	// Send packet to queue
 	a.outPacketQueue <- p
 }
@@ -287,7 +287,7 @@ func (a *Atem) processInBodyQueue() {
 		totalBytes := uint16(len(b))
 		for totalBytes > byteCursor {
 			packetLength := binary.BigEndian.Uint16(b[byteCursor : byteCursor+2])
-			a.inCmdQueue <- ParseCmd(b[byteCursor : byteCursor+packetLength])
+			a.inCmdQueue <- parseCmd(b[byteCursor : byteCursor+packetLength])
 			byteCursor = byteCursor + packetLength
 		}
 
@@ -306,28 +306,28 @@ func (a *Atem) processInPacketQueue() {
 		p := <-a.inPacketQueue
 
 		// Change uid given
-		a.UID = p.UID
+		a.UID = p.uid
 
 		// Inspect packet
 		switch true {
 
 		// Sync command
-		case p.Is(SyncCommand):
-			if p.HasBody() {
+		case p.is(syncCommand):
+			if p.hasBody() {
 				// Append to body buffer
-				a.bodyBuffer = append(a.bodyBuffer, p.Body...)
+				a.bodyBuffer = append(a.bodyBuffer, p.body...)
 			} else {
 				a.inBodyQueue <- a.bodyBuffer
 				// Clean body buffer
 				a.bodyBuffer = make([]byte, 0)
 				// Send ack
-				a.writePacketQueue(NewAckCmd(a.UID, p.AckRequestID))
+				a.writePacketQueue(newAckCmd(a.UID, p.ackRequestID))
 			}
 
 		// Else is close
 		default:
 			if a.Debug {
-				fmt.Printf("Unknown packet received:\t%xb\n", p.ToBytes())
+				fmt.Printf("Unknown packet received:\t%xb\n", p.toBytes())
 			}
 			a.Close()
 		}

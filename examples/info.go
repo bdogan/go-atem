@@ -28,7 +28,6 @@ func main() {
 	// Change this IP address as needed
 	ipAddress := "10.246.0.41"
 
-	// Create application
 	app := app{
 		atemClient: atem.Create(ipAddress, false),
 	}
@@ -40,5 +39,5 @@ func main() {
 	app.atemClient.On("closed", app.onAtemClosed)
 
 	// Make connection
-	app.atemClient.Connect()
+	log.Fatal(app.atemClient.Connect())
 }
