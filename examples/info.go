@@ -6,9 +6,15 @@
 package main
 
 import (
+	"flag"
 	"log"
 
-	"github.com/jdChum/go-atem"
+	"github.com/bdogan/go-atem"
+)
+
+var (
+	ipAddress 	= flag.String("ip", "", "Atem switcher ipv4 address")
+	debug		= flag.Bool("debug", false, "Connection debugging")
 )
 
 type app struct {
@@ -25,11 +31,12 @@ func (at *app) onAtemClosed() {
 }
 
 func main() {
-	// Change this IP address as needed
-	ipAddress := "192.168.0.41"
+	// Parse flag
+	flag.Parse()
 
+	// Create app
 	app := app{
-		atemClient: atem.Create(ipAddress, true),
+		atemClient: atem.Create(*ipAddress, *debug),
 	}
 
 	// Set connected handler
@@ -39,5 +46,5 @@ func main() {
 	app.atemClient.On("closed", app.onAtemClosed)
 
 	// Make connection
-	log.Fatal(app.atemClient.Connect())
+	app.atemClient.Connect()
 }
