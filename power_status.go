@@ -1,6 +1,6 @@
-package types
+package atem
 
 type PowerStatus struct {
-	MainPower bool
+	MainPower   bool
 	BackupPower bool
 }
