@@ -8,7 +8,7 @@ package main
 import (
 	"log"
 
-	"github.com/bdogan/go-atem"
+	"github.com/jdChum/go-atem"
 )
 
 type app struct {
@@ -26,10 +26,10 @@ func (at *app) onAtemClosed() {
 
 func main() {
 	// Change this IP address as needed
-	ipAddress := "10.246.0.41"
+	ipAddress := "192.168.0.41"
 
 	app := app{
-		atemClient: atem.Create(ipAddress, false),
+		atemClient: atem.Create(ipAddress, true),
 	}
 
 	// Set connected handler
