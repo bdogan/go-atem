@@ -85,15 +85,14 @@ func (a *Atem) On(event string, callback func()) {
 	a.listeners[event] = append(a.listeners[event], callback)
 }
 
-func (a *Atem) Connect() error {
+func (a *Atem) Connect() {
 	for {
 		err := a.connect()
 		if a.Debug {
 			fmt.Println(err)
 		}
-		if err != nil {
-			return err
-		}
+		// Retry every one second
+		time.Sleep(time.Second)
 	}
 }
 
