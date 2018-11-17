@@ -8,7 +8,7 @@ package main
 import (
 	"log"
 
-	"github.com/jdChum/go-atem"
+	"github.com/bdogan/go-atem"
 )
 
 type app struct {
