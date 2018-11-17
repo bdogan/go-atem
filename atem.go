@@ -195,9 +195,6 @@ func (a *Atem) writePacket(p *atemPacket) error {
 		a.Close()
 		return err
 	}
-	if a.Debug {
-		fmt.Printf("Send: \t\t%x\n", p.toBytes()[0:12])
-	}
 	return nil
 }
 
@@ -212,9 +209,6 @@ func (a *Atem) readPacket(timeout time.Time) (*atemPacket, error) {
 		return nil, err
 	}
 	p := parsePacket(packetBuffer[0:n])
-	if a.Debug {
-		fmt.Printf("Receive: \t%x\n", p.toBytes()[0:12])
-	}
 	return p, nil
 }
 
