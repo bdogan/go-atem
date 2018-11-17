@@ -7,9 +7,8 @@ package main
 
 import (
 	"flag"
-	"log"
-
 	"github.com/bdogan/go-atem"
+	"log"
 )
 
 var (

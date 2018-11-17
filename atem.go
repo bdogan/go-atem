@@ -45,11 +45,12 @@ type Atem struct {
 	// Private
 	connection     net.Conn
 	bodyBuffer     []byte
+	commandBuffer  []*atemCommand
 	outPacketQueue chan *atemPacket
 	inPacketQueue  chan *atemPacket
-	inBodyQueue    chan []byte
-	inCmdQueue     chan *AtemCmd
+	inCmdQueue     chan *atemCommand
 	initialized    bool
+	ackRequestID   uint16
 	listeners      map[string][]AtemCallback
 }
 
@@ -109,6 +110,13 @@ func (a *Atem) Close() {
 
 }
 
+func (a *Atem) SetPreviewInput(vs *VideoSource) {
+	if a.PreviewInput.index == vs.index {
+		return
+	}
+	a.sendCommand(newCommand("CPvI", []byte{ uint8(a.MixEffectConfig.ME), 0, uint8(vs.index >> 8), uint8(vs.index & 0xFF) }))
+}
+
 // Private Zone Start
 
 func (a *Atem) emit(event string, params ...interface{}) {
@@ -132,7 +140,9 @@ func (a *Atem) connect() error {
 	// Init
 	a.UID = 0x53AB
 	a.bodyBuffer = make([]byte, 0)
+	a.commandBuffer = make([]*atemCommand, 0)
 	a.initialized = false
+	a.ackRequestID = 0
 
 	// Trying to connect
 	a.State = Connecting
@@ -149,7 +159,7 @@ func (a *Atem) connect() error {
 
 	// Read hi packet
 	p, err := a.readPacket(time.Now().Add(time.Millisecond * 100))
-	if err != nil || p == nil || p.is(connectCommand) || p.body[0] != 0x2 {
+	if err != nil || p == nil || !p.is(connectCommand) || p.body[0] != 0x2 {
 		a.State = Closed
 		if err != nil {
 			return err
@@ -161,15 +171,16 @@ func (a *Atem) connect() error {
 	// Send OK
 	a.writePacket(newAckCmd(a.UID, 0))
 
+	// Increase local request id
+	a.ackRequestID++
+
 	// Create chan
-	a.inBodyQueue = make(chan []byte)
-	a.inCmdQueue = make(chan *AtemCmd)
+	a.inCmdQueue = make(chan *atemCommand)
 	a.outPacketQueue = make(chan *atemPacket)
 	a.inPacketQueue = make(chan *atemPacket)
 
 	// Go queues
 	go a.processInCmdQueue()
-	go a.processInBodyQueue()
 	go a.processOutPacketQueue()
 	go a.processInPacketQueue()
 
@@ -189,10 +200,21 @@ func (a *Atem) writePacket(p *atemPacket) error {
 	if !a.Connected() {
 		return errors.New("connection error on write packet")
 	}
+	if p.is(syncCommand) && len(a.commandBuffer) > 0 {
+		// Append to body
+		for _, cmd := range a.commandBuffer {
+			p.appendCommand(cmd)
+		}
+		// Clear command buffer
+		a.commandBuffer = make([]*atemCommand, 0)
+	}
 	_, err := a.connection.Write(p.toBytes())
 	if err != nil {
 		a.Close()
 		return err
+	}
+	if a.Debug {
+		fmt.Printf("Write: \t%x\n", p.toBytes())
 	}
 	return nil
 }
@@ -208,7 +230,14 @@ func (a *Atem) readPacket(timeout time.Time) (*atemPacket, error) {
 		return nil, err
 	}
 	p := parsePacket(packetBuffer[0:n])
+	if a.Debug {
+		fmt.Printf("Read: \t%x\n", p.toBytes()[0:12])
+	}
 	return p, nil
+}
+
+func (a *Atem) sendCommand(c *atemCommand) {
+	a.commandBuffer = append(a.commandBuffer, c)
 }
 
 func (a *Atem) writePacketQueue(p *atemPacket) {
@@ -265,32 +294,30 @@ func (a *Atem) processInCmdQueue() {
 	}
 }
 
-func (a *Atem) processInBodyQueue() {
-	for a.Connected() {
-		// Get []byte from queue
-		b := <-a.inBodyQueue
+func (a *Atem) parseBodyBuffer() int {
 
-		// Check size
-		if len(b) == 0 {
-			continue
-		}
+	// Total command count
+	parsedCommandTotal := 0
 
-		// Read body buffer
-		byteCursor := uint16(0)
-		totalBytes := uint16(len(b))
-		for totalBytes > byteCursor {
-			packetLength := binary.BigEndian.Uint16(b[byteCursor : byteCursor+2])
-			a.inCmdQueue <- parseCmd(b[byteCursor : byteCursor+packetLength])
-			byteCursor = byteCursor + packetLength
-		}
-
-		// Trigger connected
-		if !a.initialized {
-			a.initialized = true
-			a.emit("connected")
-		}
-
+	// Check has bytes in buffer
+	if len(a.bodyBuffer) == 0 {
+		return parsedCommandTotal
 	}
+
+	// Read body start to end
+	byteCursor := uint16(0)
+	totalBytes := uint16(len(a.bodyBuffer))
+	for totalBytes > byteCursor {
+		packetLength := binary.BigEndian.Uint16(a.bodyBuffer[byteCursor : byteCursor+2])
+		a.inCmdQueue <- parseCommand(a.bodyBuffer[byteCursor : byteCursor+packetLength])
+		byteCursor = byteCursor + packetLength
+		parsedCommandTotal++
+	}
+
+	// Clean body buffer
+	a.bodyBuffer = make([]byte, 0)
+
+	return parsedCommandTotal
 }
 
 func (a *Atem) processInPacketQueue() {
@@ -309,13 +336,26 @@ func (a *Atem) processInPacketQueue() {
 			if p.hasBody() {
 				// Append to body buffer
 				a.bodyBuffer = append(a.bodyBuffer, p.body...)
-			} else {
-				a.inBodyQueue <- a.bodyBuffer
-				// Clean body buffer
-				a.bodyBuffer = make([]byte, 0)
+			}
+			if a.initialized || !p.hasBody() {
+				// Parse body buffer
+				a.parseBodyBuffer()
+
 				// Send ack
 				a.writePacketQueue(newAckCmd(a.UID, p.ackRequestID))
+				a.writePacketQueue(newSyncCommand(a.UID, a.ackRequestID))
+				a.ackRequestID++
+
+				// Trigger connected
+				if !a.initialized {
+					a.initialized = true
+					a.emit("connected")
+				}
 			}
+
+		// Ack command
+		case p.is(ackCommand):
+			// To Do: Check from memory
 
 		// Else is close
 		default:

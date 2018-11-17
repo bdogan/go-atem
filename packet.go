@@ -18,8 +18,8 @@ type atemPacket struct {
 	body          []byte
 }
 
-func newPacket(flag uint16, uid uint16, ackResponseID uint16, ackRequestID uint16, body []byte) *atemPacket {
-	return &atemPacket{flag: flag, uid: uid, ackResponseID: ackResponseID, ackRequestID: ackRequestID, header: [4]byte{0, 0, 0, 0}, body: body}
+func newSyncCommand(uid uint16, requestId uint16) *atemPacket {
+	return &atemPacket{flag: syncCommand, uid: uid, ackResponseID: 0, ackRequestID: requestId, header: [4]byte{0, 0, 0, 0}}
 }
 
 func newConnectCmd(uid uint16) *atemPacket {
@@ -40,8 +40,21 @@ func parsePacket(msg []byte) *atemPacket {
 		body:          msg[12:]}
 }
 
+func (ap *atemPacket) appendCommand(cmd *atemCommand) {
+	// Add sync flag if not
+	if !ap.is(syncCommand) {
+		ap.addFlag(syncCommand)
+	}
+	// Append to body
+	ap.body = append(ap.body, (*cmd).toBytes()...)
+}
+
+func (ap *atemPacket) addFlag(flag uint16) {
+	ap.flag = ap.flag | flag
+}
+
 func (ap *atemPacket) is(cmd uint16) bool {
-	return (ap.flag & cmd) == 1
+	return (ap.flag & cmd) == cmd
 }
 
 func (ap *atemPacket) length() uint16 {
