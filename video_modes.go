@@ -1,28 +1,28 @@
-package types
+package atem
 
 import "fmt"
 
 type ScanType string
 
 const (
-	ProgressiveScanType  	= "p"
-	InterlaceScanType		= "i"
+	ProgressiveScanType = "p"
+	InterlaceScanType   = "i"
 )
 
 type VideoRegion string
 
 const (
-	UndefinedVideoRegion	= ""
-	PALVideoRegion			= "PAL"
-	NTSCVideoRegion			= "NTSC"
+	UndefinedVideoRegion = ""
+	PALVideoRegion       = "PAL"
+	NTSCVideoRegion      = "NTSC"
 )
 
 type AspectRatio string
 
 const (
-	UndefinedAspectRatio	= ""
-	WideAscpectRatio		= "16:9"
-	SquareAscpectRatio		= "4:3"
+	UndefinedAspectRatio = ""
+	WideAscpectRatio     = "16:9"
+	SquareAscpectRatio   = "4:3"
 )
 
 var VideoModes = []*VideoMode{
@@ -47,12 +47,12 @@ var VideoModes = []*VideoMode{
 }
 
 type VideoMode struct {
-	Lines uint16
-	ScanType ScanType
-	FrameRate float32
+	Lines       uint16
+	ScanType    ScanType
+	FrameRate   float32
 	VideoRegion VideoRegion
 	AspectRatio AspectRatio
-	index uint16
+	index       uint16
 }
 
 func NewVideoModeByIndex(index uint8) *VideoMode {
@@ -66,7 +66,7 @@ func NewVideoModeByIndex(index uint8) *VideoMode {
 }
 
 func NewVideoMode(index uint16, lines uint16, scanType ScanType, frameRate float32, videoRegion VideoRegion, aspectRatio AspectRatio) *VideoMode {
-	return &VideoMode{ index: index, Lines: lines, ScanType: scanType, FrameRate: frameRate, VideoRegion: videoRegion, AspectRatio: aspectRatio }
+	return &VideoMode{index: index, Lines: lines, ScanType: scanType, FrameRate: frameRate, VideoRegion: videoRegion, AspectRatio: aspectRatio}
 }
 
 func (vm *VideoMode) IsSupported(vmode uint16) bool {

@@ -1,4 +1,4 @@
-package types
+package atem
 
 type AtemMeModel uint8
 
@@ -8,6 +8,6 @@ const (
 )
 
 type MixEffectConfig struct {
-	ME AtemMeModel
+	ME         AtemMeModel
 	KeyersOnME uint8
 }

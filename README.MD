@@ -1,21 +1,22 @@
-# Atem
+# ATEM
 
 BlackMagicDesign ATEM switcher protocol implementation. Written in go.
 
-## Usage
+## Installation
 ```sh
 go get -u github.com/bdogan/go-atem
 ```
 
-## Initialize Atem Client
-Atem client requires ip address to connect device
+## Usage
+ATEM client requires IP address to connect device
 
 ```go
 package main
 
 import (
-	"go-atem"
 	"log"
+	
+	"github.com/bdogan/go-atem"
 )
 
 type app struct {
@@ -23,8 +24,8 @@ type app struct {
 }
 
 func (at *app) onAtemConnected()  {
-	log.Printf("Atem connected on %s. UID:%d\n", at.atemClient.Connection.LocalAddr().String(), at.atemClient.UID)
-	log.Printf("Product Id: %s, Protocol Version: %s\n", at.atemClient.ProductId.String(), at.atemClient.ProtocolVersion.String())
+	log.Printf("ATEM connected at %s. UID:%d\n", atemClient.Ip, at.atemClient.UID)
+	log.Printf("Product ID: %s, Protocol Version: %s\n", at.atemClient.ProductId.String(), at.atemClient.ProtocolVersion.String())
 }
 
 func (at *app) onAtemClosed()  {

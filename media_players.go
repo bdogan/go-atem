@@ -1,6 +1,6 @@
-package types
+package atem
 
 type MediaPlayers struct {
 	StillBanks uint8
-	ClipBanks uint8
+	ClipBanks  uint8
 }

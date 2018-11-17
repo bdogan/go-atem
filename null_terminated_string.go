@@ -1,4 +1,4 @@
-package types
+package atem
 
 import (
 	"bytes"
@@ -6,11 +6,11 @@ import (
 )
 
 type NullTerminatedString struct {
-	Body []byte
+	Body      []byte
 	nullPoint int
 }
 
-func (nts *NullTerminatedString) String() string  {
+func (nts *NullTerminatedString) String() string {
 	if nts.nullPoint == 0 {
 		nts.nullPoint = bytes.IndexByte(nts.Body, 0)
 	}
