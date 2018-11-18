@@ -32,7 +32,7 @@ func (at *app) onAtemConnected() {
 	input := atem.VideoInput1
 
 	for at.atemClient.Connected() {
-		time.Sleep(time.Millisecond * 250)
+		time.Sleep(time.Millisecond * 100)
 		if setPgm {
 			at.atemClient.SetProgramInput(input, 0)
 		} else {
