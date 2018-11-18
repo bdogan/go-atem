@@ -19,15 +19,35 @@ type atemPacket struct {
 }
 
 func newSyncCommand(uid uint16, requestId uint16) *atemPacket {
-	return &atemPacket{flag: syncCommand, uid: uid, ackResponseID: 0, ackRequestID: requestId, header: [4]byte{0, 0, 0, 0}}
+	return &atemPacket{
+		flag:          syncCommand,
+		uid:           uid,
+		ackResponseID: 0,
+		ackRequestID:  requestId,
+		header:        [4]byte{0, 0, 0, 0},
+	}
 }
 
 func newConnectCmd(uid uint16) *atemPacket {
-	return &atemPacket{flag: connectCommand, uid: uid, ackResponseID: 0, ackRequestID: 0, header: [4]byte{0, 0, 0, 0x03}, body: []byte{0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}}
+	return &atemPacket{
+		flag:          connectCommand,
+		uid:           uid,
+		ackResponseID: 0,
+		ackRequestID:  0,
+		header:        [4]byte{0, 0, 0, 0x03},
+		body:          []byte{0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+	}
 }
 
 func newAckCmd(uid uint16, ackResponseID uint16) *atemPacket {
-	return &atemPacket{flag: ackCommand, uid: uid, ackResponseID: ackResponseID, ackRequestID: 0, header: [4]byte{0, 0, 0, 0}, body: make([]byte, 0)}
+	return &atemPacket{
+		flag:          ackCommand,
+		uid:           uid,
+		ackResponseID: ackResponseID,
+		ackRequestID:  0,
+		header:        [4]byte{0, 0, 0, 0},
+		body:          make([]byte, 0),
+	}
 }
 
 func parsePacket(msg []byte) *atemPacket {
