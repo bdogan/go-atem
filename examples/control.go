@@ -25,8 +25,8 @@ type app struct {
 func (at *app) onAtemConnected() {
 	log.Printf("ATEM connected at %s. UID:%d\n", at.atemClient.Ip, at.atemClient.UID)
 
-	at.atemClient.SetProgramInput(atem.VideoBlack)
-	at.atemClient.SetPreviewInput(atem.VideoBlack)
+	at.atemClient.SetProgramInput(atem.VideoBlack, 0)
+	at.atemClient.SetPreviewInput(atem.VideoBlack, 0)
 
 	setPgm := true
 	input := atem.VideoInput1
@@ -34,9 +34,9 @@ func (at *app) onAtemConnected() {
 	for at.atemClient.Connected() {
 		time.Sleep(time.Millisecond * 250)
 		if setPgm {
-			at.atemClient.SetProgramInput(input)
+			at.atemClient.SetProgramInput(input, 0)
 		} else {
-			at.atemClient.SetPreviewInput(input)
+			at.atemClient.SetPreviewInput(input, 0)
 		}
 
 		input++
