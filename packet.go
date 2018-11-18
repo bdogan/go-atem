@@ -69,6 +69,17 @@ func (ap *atemPacket) appendCommand(cmd *AtemCommand) {
 	ap.body = append(ap.body, (*cmd).toBytes()...)
 }
 
+func packetFromCommand(cmd *AtemCommand, uid uint16, requestID uint16) *atemPacket {
+	return &atemPacket{
+		flag:          syncCommand,
+		uid:           uid,
+		ackResponseID: 0,
+		ackRequestID:  requestID,
+		header:        [4]byte{0, 0, 0, 0},
+		body:          cmd.toBytes(),
+	}
+}
+
 func (ap *atemPacket) addFlag(flag uint16) {
 	ap.flag = ap.flag | flag
 }

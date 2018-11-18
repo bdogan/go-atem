@@ -219,7 +219,9 @@ func (a *Atem) readPacket(timeout time.Time) (*atemPacket, error) {
 }
 
 func (a *Atem) SendCommand(c *AtemCommand) {
-	a.commandBuffer = append(a.commandBuffer, c)
+	//a.commandBuffer = append(a.commandBuffer, c)
+	p := packetFromCommand(c, a.UID, a.ackRequestID)
+	a.writePacketQueue(p)
 }
 
 func (a *Atem) writePacketQueue(p *atemPacket) {
