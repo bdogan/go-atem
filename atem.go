@@ -110,14 +110,6 @@ func (a *Atem) Close() {
 
 }
 
-func (a *Atem) SetPreviewInput(input VideoInputType) {
-	index := uint16(input)
-	if a.PreviewInput.index == index {
-		return
-	}
-	a.sendCommand(newCommand("CPvI", []byte{uint8(a.MixEffectConfig.ME), 0, uint8(index >> 8), uint8(index & 0xFF)}))
-}
-
 // Private Zone Start
 
 func (a *Atem) emit(event string, params ...interface{}) {
@@ -381,6 +373,7 @@ func (a *Atem) processReadQueue() {
 		if err != nil {
 			if a.Debug {
 				fmt.Println("Connection closed on read")
+				fmt.Println(err.Error())
 			}
 			a.Close()
 			return
