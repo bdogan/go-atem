@@ -60,7 +60,7 @@ func parsePacket(msg []byte) *atemPacket {
 		body:          msg[12:]}
 }
 
-func (ap *atemPacket) appendCommand(cmd *atemCommand) {
+func (ap *atemPacket) appendCommand(cmd *AtemCommand) {
 	// Add sync flag if not
 	if !ap.is(syncCommand) {
 		ap.addFlag(syncCommand)

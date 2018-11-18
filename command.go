@@ -4,29 +4,29 @@ import (
 	"fmt"
 )
 
-type atemCommand struct {
+type AtemCommand struct {
 	Name   string
 	Body   []byte
 	Header []byte
 }
 
-func NewCommand(Name string, Body []byte) *atemCommand {
-	return &atemCommand{Name: Name, Body: Body}
+func NewCommand(Name string, Body []byte) *AtemCommand {
+	return &AtemCommand{Name: Name, Body: Body}
 }
 
-func parseCommand(msg []byte) *atemCommand {
-	return &atemCommand{Name: string(msg[4:8]), Body: msg[8:]}
+func parseCommand(msg []byte) *AtemCommand {
+	return &AtemCommand{Name: string(msg[4:8]), Body: msg[8:]}
 }
 
-func (ac *atemCommand) length() uint16 {
+func (ac *AtemCommand) length() uint16 {
 	return uint16(len(ac.Body) + 8)
 }
 
-func (ac *atemCommand) string() string {
+func (ac *AtemCommand) string() string {
 	return fmt.Sprintf("Command:\t[%s]\t%d", ac.Name, ac.Body)
 }
 
-func (ac *atemCommand) toBytes() []byte {
+func (ac *AtemCommand) toBytes() []byte {
 	var result []byte
 
 	// Set length

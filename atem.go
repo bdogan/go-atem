@@ -45,10 +45,10 @@ type Atem struct {
 	// Private
 	connection     net.Conn
 	bodyBuffer     []byte
-	commandBuffer  []*atemCommand
+	commandBuffer  []*AtemCommand
 	outPacketQueue chan *atemPacket
 	inPacketQueue  chan *atemPacket
-	inCmdQueue     chan *atemCommand
+	inCmdQueue     chan *AtemCommand
 	initialized    bool
 	ackRequestID   uint16
 	listeners      map[string][]AtemCallback
@@ -84,7 +84,7 @@ func (a *Atem) Connect() error {
 	// Init
 	a.UID = 0x53AB
 	a.bodyBuffer = make([]byte, 0)
-	a.commandBuffer = make([]*atemCommand, 0)
+	a.commandBuffer = make([]*AtemCommand, 0)
 	a.initialized = false
 	a.ackRequestID = 0
 
@@ -119,7 +119,7 @@ func (a *Atem) Connect() error {
 	a.ackRequestID++
 
 	// Create chan
-	a.inCmdQueue = make(chan *atemCommand)
+	a.inCmdQueue = make(chan *AtemCommand)
 	a.outPacketQueue = make(chan *atemPacket)
 	a.inPacketQueue = make(chan *atemPacket)
 
@@ -188,7 +188,7 @@ func (a *Atem) writePacket(p *atemPacket) error {
 			p.appendCommand(cmd)
 		}
 		// Clear command buffer
-		a.commandBuffer = make([]*atemCommand, 0)
+		a.commandBuffer = make([]*AtemCommand, 0)
 	}
 	_, err := a.connection.Write(p.toBytes())
 	if err != nil {
@@ -218,7 +218,7 @@ func (a *Atem) readPacket(timeout time.Time) (*atemPacket, error) {
 	return p, nil
 }
 
-func (a *Atem) SendCommand(c *atemCommand) {
+func (a *Atem) SendCommand(c *AtemCommand) {
 	a.commandBuffer = append(a.commandBuffer, c)
 }
 
