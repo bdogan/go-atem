@@ -173,7 +173,7 @@ func (a *Atem) emit(event string, params ...interface{}) {
 			in[k] = reflect.ValueOf(param)
 		}
 		for _, cb := range listeners {
-			reflect.ValueOf(cb).Call(in)
+			go reflect.ValueOf(cb).Call(in)
 		}
 	}
 }
