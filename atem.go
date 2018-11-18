@@ -75,56 +75,7 @@ func Create(Ip string, Debug bool) *Atem {
 
 // Public Zone Start
 
-func (a *Atem) Connected() bool {
-	return a.State == Open && a.connection != nil
-}
-
-func (a *Atem) On(event string, callback func()) {
-	if _, exists := a.listeners[event]; !exists {
-		a.listeners[event] = make([]AtemCallback, 0)
-	}
-	a.listeners[event] = append(a.listeners[event], callback)
-}
-
-func (a *Atem) Connect() {
-	for {
-		err := a.connect()
-		if a.Debug {
-			fmt.Println(err)
-		}
-		// Retry every one second
-		time.Sleep(time.Second)
-	}
-}
-
-func (a *Atem) Close() {
-	if a.Connected() {
-		a.State = Closed
-		a.connection.Close()
-		a.connection = nil
-	}
-	if a.initialized {
-		a.emit("closed")
-		a.initialized = false
-	}
-
-}
-
-// Private Zone Start
-
-func (a *Atem) emit(event string, params ...interface{}) {
-	if listeners, exists := a.listeners[event]; exists {
-		in := make([]reflect.Value, len(params))
-		for k, param := range params {
-			in[k] = reflect.ValueOf(param)
-		}
-		for _, cb := range listeners {
-			reflect.ValueOf(cb).Call(in)
-		}
-	}
-}
-
-func (a *Atem) connect() error {
+func (a *Atem) Connect() error {
 	// Check already connected
 	if a.State != Closed {
 		return errors.New("already connected to server: " + a.Ip)
@@ -187,6 +138,44 @@ func (a *Atem) connect() error {
 
 	// Return success
 	return nil
+}
+
+func (a *Atem) Connected() bool {
+	return a.State == Open && a.connection != nil
+}
+
+func (a *Atem) On(event string, callback func()) {
+	if _, exists := a.listeners[event]; !exists {
+		a.listeners[event] = make([]AtemCallback, 0)
+	}
+	a.listeners[event] = append(a.listeners[event], callback)
+}
+
+func (a *Atem) Close() {
+	if a.Connected() {
+		a.State = Closed
+		a.connection.Close()
+		a.connection = nil
+	}
+	if a.initialized {
+		a.emit("closed")
+		a.initialized = false
+	}
+
+}
+
+// Private Zone Start
+
+func (a *Atem) emit(event string, params ...interface{}) {
+	if listeners, exists := a.listeners[event]; exists {
+		in := make([]reflect.Value, len(params))
+		for k, param := range params {
+			in[k] = reflect.ValueOf(param)
+		}
+		for _, cb := range listeners {
+			reflect.ValueOf(cb).Call(in)
+		}
+	}
 }
 
 func (a *Atem) writePacket(p *atemPacket) error {
