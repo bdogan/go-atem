@@ -110,11 +110,12 @@ func (a *Atem) Close() {
 
 }
 
-func (a *Atem) SetPreviewInput(vs *VideoSource) {
-	if a.PreviewInput.index == vs.index {
+func (a *Atem) SetPreviewInput(input VideoInputType) {
+	index := uint16(input)
+	if a.PreviewInput.index == index {
 		return
 	}
-	a.sendCommand(newCommand("CPvI", []byte{ uint8(a.MixEffectConfig.ME), 0, uint8(vs.index >> 8), uint8(vs.index & 0xFF) }))
+	a.sendCommand(newCommand("CPvI", []byte{uint8(a.MixEffectConfig.ME), 0, uint8(index >> 8), uint8(index & 0xFF)}))
 }
 
 // Private Zone Start
