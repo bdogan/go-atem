@@ -10,7 +10,7 @@ type atemCommand struct {
 	Header []byte
 }
 
-func newCommand(Name string, Body []byte) *atemCommand {
+func NewCommand(Name string, Body []byte) *atemCommand {
 	return &atemCommand{Name: Name, Body: Body}
 }
 

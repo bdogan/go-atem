@@ -218,7 +218,7 @@ func (a *Atem) readPacket(timeout time.Time) (*atemPacket, error) {
 	return p, nil
 }
 
-func (a *Atem) sendCommand(c *atemCommand) {
+func (a *Atem) SendCommand(c *atemCommand) {
 	a.commandBuffer = append(a.commandBuffer, c)
 }
 
