@@ -13,7 +13,7 @@ func (a *Atem) SetPreviewInput(input VideoInputType, meIndex uint8) {
 	index := uint16(input)
 	// Check if the requested input is already on the preview bus
 	// or if the requested M/E is outside of the supported range (ex. requesting M/E 2 on 1 M/E)
-	if a.PreviewInput.index == index || meIndex > uint8(a.MixEffectConfig.ME) {
+	if a.PreviewInput.Index == index || meIndex > uint8(a.MixEffectConfig.ME) {
 		return
 	}
 	a.SendCommand(NewCommand("CPvI", []byte{meIndex, 0, uint8(index >> 8), uint8(index & 0xFF)}))
@@ -24,7 +24,7 @@ func (a *Atem) SetProgramInput(input VideoInputType, meIndex uint8) {
 	index := uint16(input)
 	// Check if the requested input is already on the preview bus
 	// or if the requested M/E is outside of the supported range (ex. requesting M/E 2 on 1 M/E)
-	if a.ProgramInput.index == index || meIndex > uint8(a.MixEffectConfig.ME) {
+	if a.ProgramInput.Index == index || meIndex > uint8(a.MixEffectConfig.ME) {
 		return
 	}
 

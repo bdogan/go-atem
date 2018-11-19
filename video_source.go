@@ -164,7 +164,7 @@ func (vss *VideoSources) Update(data []byte) {
 	inputIndex := binary.BigEndian.Uint16(data[0:2])
 	videoSource, exists := (*vss.list)[inputIndex]
 	if !exists {
-		videoSource = &VideoSource{index: inputIndex}
+		videoSource = &VideoSource{Index: inputIndex}
 		(*vss.list)[inputIndex] = videoSource
 	}
 	videoSource.Update(data)
@@ -187,8 +187,7 @@ func (vss *VideoSources) String() string {
 }
 
 type VideoSource struct {
-	index uint16
-
+	Index                      uint16
 	Type                       string
 	LongName                   NullTerminatedString
 	ShortName                  NullTerminatedString
@@ -204,7 +203,7 @@ func (vs *VideoSource) String() string {
 }
 
 func (vs *VideoSource) Update(data []byte) {
-	vs.Type = VideoSourceType[vs.index]
+	vs.Type = VideoSourceType[vs.Index]
 	vs.LongName = NullTerminatedString{Body: data[2:22]}
 	vs.ShortName = NullTerminatedString{Body: data[22:26]}
 	vs.AvailableExternalPortTypes = []string{}
